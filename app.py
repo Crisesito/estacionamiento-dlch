@@ -4,9 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
+
+# Configuración de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///estacionamientos.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Definición del modelo
 class Estacionamiento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
@@ -15,6 +19,7 @@ class Estacionamiento(db.Model):
     fecha_hora_ingreso = db.Column(db.DateTime, default=datetime.utcnow)
     fecha_hora_salida = db.Column(db.DateTime, nullable=True)
 
+# Rutas
 @app.route('/')
 def index():
     ocupados = Estacionamiento.query.filter(Estacionamiento.fecha_hora_salida == None).count()
@@ -41,7 +46,9 @@ def salida():
         db.session.commit()
     return redirect(url_for('index'))
 
+# Crear las tablas si no existen
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
